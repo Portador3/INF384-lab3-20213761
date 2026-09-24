@@ -16,7 +16,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Corrección Defecto 4 y 5: Sin credenciales, sin herramientas de depuración (vim, procps-ng) y sin node_modules
-FROM public.ecr.aws/lambda/nodejs:20
+FROM public.ecr.aws/lambda/nodejs:20 AS runner
 
 WORKDIR /var/task
 
