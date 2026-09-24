@@ -13,7 +13,6 @@ RUN npm ci
 
 # Copiar el resto del código y construir el artefacto con esbuild (genera dist/handler.js)
 COPY src/ ./src/
-COPY tsconfig.json ./
 RUN npm run build
 
 # Corrección Defecto 4 y 5: Sin credenciales, sin herramientas de depuración (vim, procps-ng) y sin node_modules
