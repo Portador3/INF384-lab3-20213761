@@ -163,6 +163,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
+          provenance: false
           labels: |
             org.opencontainers.image.title=inf384-lab3
           tags: |
