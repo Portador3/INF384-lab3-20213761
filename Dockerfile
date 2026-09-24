@@ -2,19 +2,26 @@
 # Contiene cinco malas practicas deliberadas. Cada una lleva su numero en la
 # linea anterior. Corregirlas es el bloque A1 de la guia del laboratorio.
 
-# defecto 1
-FROM public.ecr.aws/lambda/nodejs:latest
+# Corrección Defecto 1: Versión fija e inmutable
+FROM public.ecr.aws/lambda/nodejs:20 AS builder
 
-# defecto 2
-COPY . .
+WORKDIR /var/task
 
-# defecto 3
-RUN npm install
+# Corrección Defecto 2 y 3: Copiar manifiestos primero e instalar con npm ci
+COPY package*.json ./
+RUN npm ci
 
-# defecto 4
-ENV DB_PASSWORD="inf384-clave-en-texto-plano"
+# Copiar el resto del código y construir el artefacto con esbuild (genera dist/handler.js)
+COPY src/ ./src/
+COPY tsconfig.json ./
+RUN npm run build
 
-# defecto 5
-RUN dnf install -y procps-ng vim && dnf clean all
+# Corrección Defecto 4 y 5: Sin credenciales, sin herramientas de depuración (vim, procps-ng) y sin node_modules
+FROM public.ecr.aws/lambda/nodejs:20
 
-CMD ["src/handler.handler"]
+WORKDIR /var/task
+
+# Copiar únicamente el archivo empaquetado desde la etapa builder
+COPY --from=builder /var/task/dist/handler.js ./
+
+CMD [ "handler.handler" ]
