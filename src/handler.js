@@ -4,10 +4,6 @@ const { obtenerVersion } = require('./version');
 
 const NOMBRE_COOKIE_SESION = 'inf384_sesion';
 
-// INYECCION DE PRUEBA (NO UTILIZAR EN PRODUCCION)
-const fakeAwsSecret = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
-const fakeAwsKey = "AKIA5234567890ABCD12";
-
 // Lee el marcador de sesion de las cabeceras del evento.
 // Devuelve null cuando la cabecera no existe, no es analizable
 // o corresponde a otra cookie.
