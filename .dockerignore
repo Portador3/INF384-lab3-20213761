@@ -3,5 +3,8 @@
 node_modules
 dist
 coverage
-*.md
 .env
+*.md
+.dockerignore
+.dockerignore.ejemplo
+.gitignore
