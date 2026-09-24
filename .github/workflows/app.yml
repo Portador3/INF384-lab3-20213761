@@ -129,19 +129,18 @@ jobs:
             --config=p/javascript \
             src/
         continue-on-error: true # Informativo: no bloquea si hay hallazgos
-
-  # Construccion y Publicacion de la Imagen
+# A3 · Build y publicación de la imagen
   publicar:
     runs-on: ubuntu-latest
     needs: [pruebas, calidad, secretos, dependencias, estatico]
     if: github.ref == 'refs/heads/main'
     outputs:
-      digest: ${{ steps.build-push.outputs.digest }}
+      digest: ${{ steps.export-digest.outputs.digest }}
     steps:
-      - name: Checkout
+      - name: Checkout del repositorio
         uses: actions/checkout@v4
 
-      - name: Credenciales temporales AWS
+      - name: Configurar credenciales de AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -149,20 +148,15 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
-      - name: Login a Amazon ECR Private
+      - name: Iniciar sesion en Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Obtener version del package.json
-        id: pkg
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Construir y publicar imagen (con Tag SHA)
+      # 1. Construcción y publicación con el tag inmutable (SHA corto)
+      - name: Construir y publicar imagen (Tag SHA)
         id: build-push
         uses: docker/build-push-action@v5
         with:
@@ -174,21 +168,25 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/inf384-lab3:${{ github.sha }}
 
-      - name: Asignar tags adicionales (Version y Ambiente) al mismo manifiesto
+      # 2. Reasignación del tag móvil 'prd' sobre el mismo manifiesto (sin reenviar capas)
+      - name: Asignar tag movil prd
         run: |
           REGISTRY="${{ steps.login-ecr.outputs.registry }}"
-          VERSION="${{ steps.pkg.outputs.version }}"
           SHA="${{ github.sha }}"
           
-          # Tag de versión
           docker buildx imagetools create \
-            -t "$REGISTRY/inf384-lab3:$VERSION" \
+            -t "$REGISTRY/inf384-lab3:prd" \
             "$REGISTRY/inf384-lab3:$SHA"
 
-          # Tag de ambiente (prod)
-          docker buildx imagetools create \
-            -t "$REGISTRY/inf384-lab3:prod" \
-            "$REGISTRY/inf384-lab3:$SHA"
+      # 3. Formatear y exponer el digest exacto <registry>/<aplicacion>@sha256:...
+      - name: Exponer salida digest
+        id: export-digest
+        run: |
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          DIGEST="${{ steps.build-push.outputs.digest }}"
+          FULL_DIGEST="${REGISTRY}/inf384-lab3@${DIGEST}"
+          
+          echo "digest=${FULL_DIGEST}" >> $GITHUB_OUTPUT
 
   # Este job viene completo y no se modifica.
   # Las estrategias de despliegue y la verificacion posterior son contenido
