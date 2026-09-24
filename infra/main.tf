@@ -71,9 +71,7 @@ resource "aws_cloudwatch_log_group" "funcion" {
 }
 
 resource "aws_lambda_function" "app" {
-  # CAMBIO TEMPORAL PARA INYECCIÓN DE FALLA 2:
-  function_name = "${var.nombre_aplicacion}-destruir-test"
-  # function_name = var.nombre_aplicacion
+  function_name = var.nombre_aplicacion
   role          = local.arn_rol_ejecucion
   package_type  = "Image"
   image_uri     = local.imagen_inicial
